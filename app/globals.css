@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Pretendard:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Scene24-style cinematic dark palette */
+  --bg: #0a0a0b;            /* near-black canvas */
+  --bg-2: #121214;
+  --bg-3: #17171a;
+
+  /* Text on the dark canvas */
+  --fg: #fafafa;            /* off-white */
+  --fg-mid: #a1a1aa;
+  --fg-dim: #6b6b73;
+  --line: rgba(250, 250, 250, 0.09);
+  --line-strong: rgba(250, 250, 250, 0.16);
+
+  /* Elevated dark cards */
+  --card: #141416;
+  --card-2: #1b1b1f;
+  --card-line: rgba(250, 250, 250, 0.08);
+  --ink: #f4f4f5;           /* primary text on cards */
+  --ink-mid: #b4b4bd;
+  --ink-dim: #7a7a84;
+
+  /* Accents */
+  --accent: #fafafa;        /* interactive / active = clean white */
+  --accent-ink: #0a0a0b;    /* text on white accent */
+  --live: #f5b544;          /* warm amber = live */
+  --live-soft: #fbcf82;
+
+  /* League identity dots */
+  --accent-mlb: #e0234e;
+  --accent-kbo: #3b82f6;
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Pretendard', -apple-system, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(1100px 560px at 50% -12%, rgba(250, 250, 250, 0.06), transparent 60%),
+    radial-gradient(800px 460px at 100% 0%, rgba(245, 181, 68, 0.05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+button { cursor: pointer; font-family: var(--sans); border: none; background: none; }
+::selection { background: var(--accent); color: var(--accent-ink); }
