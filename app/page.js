@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import styles from './page.module.css'
+import ChatPanel from './components/ChatPanel'
 
 const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -208,6 +209,7 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
+      <ChatPanel />
       <header className={styles.header}>
         <div className={styles.brandRow}>
           <span className={styles.logoMark} />
