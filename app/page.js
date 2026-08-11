@@ -13,6 +13,7 @@ const SPORTS = [
     leagues: [
       { id: 'mlb', label: 'MLB', endpoint: '/api/mlb', color: '#e0234e' },
       { id: 'kbo', label: 'KBO', endpoint: '/api/kbo', color: '#22c55e' },
+      { id: 'npb', label: 'NPB', endpoint: '/api/npb', color: '#1e3a8a' },
     ],
   },
   {
@@ -114,7 +115,64 @@ function CopyButton({ text }) {
   )
 }
 
-function GameCard({ leagueLabel, color, dateLabel, games, loading, error }) {
+// ---------- MLB 불펜 현황 ----------
+function usageLabel(a) {
+  const day = a.daysAgo === 0 ? '오늘' : `${a.daysAgo}일 전`
+  return `${day} ${a.pitches}구`
+}
+
+function BullpenColumn({ label, data }) {
+  return (
+    <div className={styles.bpCol}>
+      <div className={styles.bpTeam}>{label}</div>
+      {data.pitchers.map((p, i) => (
+        <div key={i} className={styles.bpRow}>
+          <span className={styles.bpName}>
+            {p.name}
+            {p.isStarter && <span className={styles.bpStarterTag}>선발</span>}
+            {p.backToBack && <span className={styles.bpB2B}>연투</span>}
+          </span>
+          <span className={p.appearances.length ? styles.bpUsage : styles.bpRested}>
+            {p.appearances.length
+              ? p.appearances.map(usageLabel).join(' · ')
+              : '휴식'}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function BullpenPanel({ game, dateStr }) {
+  const [state, setState] = useState({ loading: true, error: false, data: null })
+
+  useEffect(() => {
+    let alive = true
+    fetch(`/api/mlb/bullpen?away=${game.awayTeamId}&home=${game.homeTeamId}&date=${dateStr}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!alive) return
+        if (data.error) setState({ loading: false, error: true, data: null })
+        else setState({ loading: false, error: false, data })
+      })
+      .catch(() => alive && setState({ loading: false, error: true, data: null }))
+    return () => { alive = false }
+  }, [game.awayTeamId, game.homeTeamId, dateStr])
+
+  if (state.loading) return <div className={styles.bpState}><span className={styles.spinner} /> 불펜 현황 불러오는 중...</div>
+  if (state.error) return <div className={styles.bpState}>불펜 정보를 가져오지 못했습니다</div>
+
+  return (
+    <div className={styles.bullpenPanel}>
+      <BullpenColumn label={game.awayTeam} data={state.data.away} />
+      <BullpenColumn label={game.homeTeam} data={state.data.home} />
+      <div className={styles.bpHint}>최근 3경기 투구 수 기준 · 연투 = 이틀 연속 등판</div>
+    </div>
+  )
+}
+
+function GameCard({ leagueLabel, color, dateLabel, dateStr, games, loading, error }) {
+  const [openBullpen, setOpenBullpen] = useState(null) // 열려있는 경기 index
   const hasPitchers = games.some(g => g.awayPitcher)
   const copyText = games.length > 0 ? buildCopyText(leagueLabel, dateLabel, games, hasPitchers) : ''
 
@@ -135,19 +193,29 @@ function GameCard({ leagueLabel, color, dateLabel, games, loading, error }) {
       {!loading && !error && games.length > 0 && (
         <div className={styles.gameList}>
           {games.map((g, i) => (
-            <div key={i} className={`${styles.gameRow} ${g.abstractState === 'Live' ? styles.gameRowLive : ''}`}>
-              <span className={styles.gameTime}>{g.time}</span>
-              <span className={styles.gameMatchup}>
-                <span className={styles.team}>{g.awayTeam}</span>
-                {hasPitchers && <span className={styles.pitcher}>({g.awayPitcher})</span>}
-                <span className={styles.vs}>VS</span>
-                <span className={styles.team}>{g.homeTeam}</span>
-                {hasPitchers && <span className={styles.pitcher}>({g.homePitcher})</span>}
-              </span>
-              <span className={styles.gameRight}>
-                <ScoreDisplay game={g} />
-                <StatusBadge game={g} />
-              </span>
+            <div key={i}>
+              <div className={`${styles.gameRow} ${g.abstractState === 'Live' ? styles.gameRowLive : ''}`}>
+                <span className={styles.gameTime}>{g.time}</span>
+                <span className={styles.gameMatchup}>
+                  <span className={styles.team}>{g.awayTeam}</span>
+                  {hasPitchers && <span className={styles.pitcher}>({g.awayPitcher})</span>}
+                  <span className={styles.vs}>VS</span>
+                  <span className={styles.team}>{g.homeTeam}</span>
+                  {hasPitchers && <span className={styles.pitcher}>({g.homePitcher})</span>}
+                </span>
+                <span className={styles.gameRight}>
+                  <ScoreDisplay game={g} />
+                  <StatusBadge game={g} />
+                  {g.awayTeamId && g.homeTeamId && (
+                    <button
+                      className={`${styles.bullpenBtn} ${openBullpen === i ? styles.bullpenBtnActive : ''}`}
+                      onClick={() => setOpenBullpen(o => o === i ? null : i)}>
+                      불펜
+                    </button>
+                  )}
+                </span>
+              </div>
+              {openBullpen === i && <BullpenPanel game={g} dateStr={dateStr} />}
             </div>
           ))}
         </div>
@@ -257,7 +325,7 @@ export default function Home() {
           const r = results[lg.id] || { games: [], loading: true, error: false }
           return (
             <GameCard key={lg.id} leagueLabel={lg.label} color={lg.color} dateLabel={dateLabel}
-              games={r.games} loading={r.loading} error={r.error} />
+              dateStr={dateStr} games={r.games} loading={r.loading} error={r.error} />
           )
         })}
       </div>
