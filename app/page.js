@@ -171,8 +171,85 @@ function BullpenPanel({ game, dateStr }) {
   )
 }
 
+// ---------- AI 경기 분석 ----------
+const EDGE_LABELS = { starter: '선발투수', bullpen: '불펜', form: '최근 폼', offense: '타선' }
+
+function EdgeBar({ edge }) {
+  // edge: -1(원정 우위) ~ +1(홈 우위)
+  const pct = Math.min(100, Math.abs(edge) * 100)
+  return (
+    <span className={styles.edgeTrack}>
+      <span className={styles.edgeHalf}>
+        {edge < 0 && <span className={styles.edgeFillAway} style={{ width: `${pct}%` }} />}
+      </span>
+      <span className={styles.edgeCenter} />
+      <span className={styles.edgeHalf}>
+        {edge > 0 && <span className={styles.edgeFillHome} style={{ width: `${pct}%` }} />}
+      </span>
+    </span>
+  )
+}
+
+function AnalysisPanel({ game, dateStr }) {
+  const [state, setState] = useState({ loading: true, error: false, data: null })
+
+  useEffect(() => {
+    let alive = true
+    const q = new URLSearchParams({
+      gamePk: game.gamePk, date: dateStr,
+      away: game.awayTeamId, home: game.homeTeamId,
+      awaySp: game.awayPitcherId || '', homeSp: game.homePitcherId || '',
+      awayTeam: game.awayTeam, homeTeam: game.homeTeam,
+    })
+    fetch(`/api/mlb/analysis?${q}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!alive) return
+        if (data.error) setState({ loading: false, error: true, data: null })
+        else setState({ loading: false, error: false, data })
+      })
+      .catch(() => alive && setState({ loading: false, error: true, data: null }))
+    return () => { alive = false }
+  }, [game, dateStr])
+
+  if (state.loading) return <div className={styles.bpState}><span className={styles.spinner} /> 경기 분석 중...</div>
+  if (state.error) return <div className={styles.bpState}>분석 데이터를 가져오지 못했습니다</div>
+
+  const d = state.data
+  return (
+    <div className={styles.anPanel}>
+      {/* 승률 바 */}
+      <div className={styles.anProbRow}>
+        <span className={styles.anTeamName}>{game.awayTeam}</span>
+        <span className={styles.anProbNums}>{d.awayWinPct}% : {d.homeWinPct}%</span>
+        <span className={styles.anTeamName}>{game.homeTeam}</span>
+      </div>
+      <div className={styles.anProbBar}>
+        <span className={styles.anProbAway} style={{ width: `${d.awayWinPct}%` }} />
+        <span className={styles.anProbHome} style={{ width: `${d.homeWinPct}%` }} />
+      </div>
+
+      {/* 요소별 우위 */}
+      <div className={styles.anEdges}>
+        {Object.entries(EDGE_LABELS).map(([key, label]) => (
+          <div key={key} className={styles.anEdgeRow}>
+            <span className={styles.anEdgeLabel}>{label}<span className={styles.anWeight}> ×{d.weights[key]}</span></span>
+            <EdgeBar edge={d.edges[key]} />
+          </div>
+        ))}
+      </div>
+
+      {/* AI 분석문 */}
+      {d.aiText
+        ? <p className={styles.anText}>{d.aiText}</p>
+        : <p className={styles.anNoAi}>AI 분석문은 ANTHROPIC_API_KEY 설정 후 표시됩니다 (현재는 가중치 점수만 계산)</p>}
+      <div className={styles.bpHint}>선발 ERA·WHIP / 불펜 피로도 / 최근 10경기 / 팀 OPS 가중 합산 · 참고용 예측</div>
+    </div>
+  )
+}
+
 function GameCard({ leagueLabel, color, dateLabel, dateStr, games, loading, error }) {
-  const [openBullpen, setOpenBullpen] = useState(null) // 열려있는 경기 index
+  const [openPanel, setOpenPanel] = useState(null) // { i, kind: 'bullpen' | 'analysis' }
   const hasPitchers = games.some(g => g.awayPitcher)
   const copyText = games.length > 0 ? buildCopyText(leagueLabel, dateLabel, games, hasPitchers) : ''
 
@@ -207,15 +284,25 @@ function GameCard({ leagueLabel, color, dateLabel, dateStr, games, loading, erro
                   <ScoreDisplay game={g} />
                   <StatusBadge game={g} />
                   {g.awayTeamId && g.homeTeamId && (
-                    <button
-                      className={`${styles.bullpenBtn} ${openBullpen === i ? styles.bullpenBtnActive : ''}`}
-                      onClick={() => setOpenBullpen(o => o === i ? null : i)}>
-                      불펜
-                    </button>
+                    <>
+                      <button
+                        className={`${styles.bullpenBtn} ${openPanel?.i === i && openPanel?.kind === 'bullpen' ? styles.bullpenBtnActive : ''}`}
+                        onClick={() => setOpenPanel(o => o?.i === i && o?.kind === 'bullpen' ? null : { i, kind: 'bullpen' })}>
+                        불펜
+                      </button>
+                      {g.gamePk && (
+                        <button
+                          className={`${styles.bullpenBtn} ${openPanel?.i === i && openPanel?.kind === 'analysis' ? styles.bullpenBtnActive : ''}`}
+                          onClick={() => setOpenPanel(o => o?.i === i && o?.kind === 'analysis' ? null : { i, kind: 'analysis' })}>
+                          분석
+                        </button>
+                      )}
+                    </>
                   )}
                 </span>
               </div>
-              {openBullpen === i && <BullpenPanel game={g} dateStr={dateStr} />}
+              {openPanel?.i === i && openPanel?.kind === 'bullpen' && <BullpenPanel game={g} dateStr={dateStr} />}
+              {openPanel?.i === i && openPanel?.kind === 'analysis' && <AnalysisPanel game={g} dateStr={dateStr} />}
             </div>
           ))}
         </div>

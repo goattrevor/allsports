@@ -446,6 +446,132 @@
   .bullpenPanel { grid-template-columns: 1fr; gap: 0.9rem 0; padding: 0.8rem 1.1rem; }
 }
 
+/* ---------- AI 경기 분석 ---------- */
+.anPanel {
+  padding: 0.9rem 1.35rem 1rem;
+  background: var(--card-2);
+  border-bottom: 1px solid var(--card-line);
+}
+
+.anProbRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.4rem;
+}
+
+.anTeamName {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ink-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anProbNums {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fg);
+  flex-shrink: 0;
+}
+
+.anProbBar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+
+.anProbAway { background: #60a5fa; transition: width 0.4s; }
+.anProbHome { background: var(--live); transition: width 0.4s; }
+
+.anEdges {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 0.85rem;
+}
+
+.anEdgeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.anEdgeLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+  min-width: 84px;
+  flex-shrink: 0;
+}
+
+.anWeight {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--fg-dim);
+}
+
+.edgeTrack {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 6px;
+}
+
+.edgeHalf {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  background: rgba(250, 250, 250, 0.05);
+}
+
+.edgeHalf:first-child { border-radius: 999px 0 0 999px; }
+.edgeHalf:last-child { border-radius: 0 999px 999px 0; }
+
+.edgeHalf:first-child .edgeFillAway {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  background: #60a5fa;
+  border-radius: 999px 0 0 999px;
+}
+
+.edgeHalf:last-child .edgeFillHome {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--live);
+  border-radius: 0 999px 999px 0;
+}
+
+.edgeCenter {
+  width: 2px;
+  height: 10px;
+  background: var(--line-strong);
+  flex-shrink: 0;
+}
+
+.anText {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.anNoAi {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--fg-dim);
+  margin-bottom: 0.5rem;
+}
+
 /* ---------- Score & status ---------- */
 .score {
   display: inline-flex;
