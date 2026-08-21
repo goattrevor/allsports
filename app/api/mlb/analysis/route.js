@@ -74,6 +74,7 @@ export async function GET(request) {
     const result = await analyzeGame({
       awayTeamId, homeTeamId,
       awayPitcherId: sp.get('awaySp'), homePitcherId: sp.get('homeSp'),
+      venueId: sp.get('venue') || null,
       dateStr: date,
     })
 

@@ -172,7 +172,7 @@ function BullpenPanel({ game, dateStr }) {
 }
 
 // ---------- AI 경기 분석 ----------
-const EDGE_LABELS = { starter: '선발투수', bullpen: '불펜', form: '최근 폼', offense: '타선' }
+const EDGE_LABELS = { starter: '선발투수', bullpen: '불펜', form: '최근 폼', offense: '타선', h2h: '상대전적', weather: '날씨' }
 
 function EdgeBar({ edge }) {
   // edge: -1(원정 우위) ~ +1(홈 우위)
@@ -199,6 +199,7 @@ function AnalysisPanel({ game, dateStr }) {
       gamePk: game.gamePk, date: dateStr,
       away: game.awayTeamId, home: game.homeTeamId,
       awaySp: game.awayPitcherId || '', homeSp: game.homePitcherId || '',
+      venue: game.venueId || '',
       awayTeam: game.awayTeam, homeTeam: game.homeTeam,
     })
     fetch(`/api/mlb/analysis?${q}`)
@@ -239,11 +240,28 @@ function AnalysisPanel({ game, dateStr }) {
         ))}
       </div>
 
+      {/* 상대전적·날씨 정보 */}
+      {(d.facts?.h2h?.total > 0 || (d.facts?.weather && !d.facts.weather.isDome && d.facts.weather.temp != null)) && (
+        <div className={styles.anInfoRow}>
+          {d.facts.h2h?.total > 0 && (
+            <span>시즌 상대전적 {game.homeTeam} {d.facts.h2h.wins}승 {d.facts.h2h.losses}패</span>
+          )}
+          {d.facts.weather && !d.facts.weather.isDome && d.facts.weather.temp != null && (
+            <span>
+              {Math.round(d.facts.weather.temp)}°C
+              {d.facts.weather.rainPct != null && ` · 강수 ${d.facts.weather.rainPct}%`}
+              {d.facts.weather.windKmh != null && ` · 바람 ${Math.round(d.facts.weather.windKmh)}km/h`}
+            </span>
+          )}
+          {d.facts.weather?.isDome && <span>돔구장 (날씨 영향 없음)</span>}
+        </div>
+      )}
+
       {/* AI 분석문 */}
       {d.aiText
         ? <p className={styles.anText}>{d.aiText}</p>
         : <p className={styles.anNoAi}>AI 분석문은 ANTHROPIC_API_KEY 설정 후 표시됩니다 (현재는 가중치 점수만 계산)</p>}
-      <div className={styles.bpHint}>선발 ERA·WHIP / 불펜 피로도 / 최근 10경기 / 팀 OPS 가중 합산 · 참고용 예측</div>
+      <div className={styles.bpHint}>선발 ERA·WHIP / 불펜 피로도 / 최근 10경기 / 팀 OPS / 상대전적 / 날씨 가중 합산 · 참고용 예측</div>
     </div>
   )
 }

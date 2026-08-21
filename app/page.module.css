@@ -558,6 +558,16 @@
   flex-shrink: 0;
 }
 
+.anInfoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--ink-dim);
+  margin-bottom: 0.7rem;
+}
+
 .anText {
   font-size: 0.8rem;
   line-height: 1.65;
